@@ -1,0 +1,30 @@
+<!-- bulk.ejs -->
+<div class="container mt-4">
+  <div class="card shadow">
+    <div class="card-header bg-primary text-white">
+      <h4 class="mb-0">Bulk Upload Trades</h4>
+    </div>
+    <div class="card-body">
+      <form action="/trades/bulk" method="POST" enctype="multipart/form-data">
+        <div class="mb-3">
+          <label for="tradesFile" class="form-label">Upload CSV File</label>
+          <input
+            class="form-control"
+            type="file"
+            id="tradesFile"
+            name="tradesFile"
+            accept=".csv"
+            required
+          />
+          <div class="form-text">
+            CSV format: stock_name,quantity,broker_name,price<br />
+            Example: AAPL,100,Broker A,150.50
+          </div>
+        </div>
+        <button type="submit" class="btn btn-primary px-4">
+          <i class="bi bi-upload me-2"></i>Upload Trades
+        </button>
+      </form>
+    </div>
+  </div>
+</div>

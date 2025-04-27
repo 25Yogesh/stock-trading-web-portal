@@ -1,0 +1,29 @@
+<!-- dashboard.ejs -->
+<div class="row">
+  <div class="col-md-6">
+    <div class="card">
+      <div class="card-header">
+        <h5>Trade Statistics</h5>
+      </div>
+      <div class="card-body">
+        <p>Welcome, <%= user.username %>!</p>
+        <p>Total Trades: <%= totalTrades %></p>
+        <p>Total Lots: <%= totalLots %></p>
+      </div>
+    </div>
+  </div>
+
+  <div class="col-md-6">
+    <div class="card">
+      <div class="card-header">
+        <h5>Quick Actions</h5>
+      </div>
+      <div class="card-body">
+        <a href="/trades/new" class="btn btn-primary">Add New Trade</a>
+        <a href="/trades/bulk" class="btn btn-danger">Bulk Upload Trade</a>
+        <a href="/lots/FIFO" class="btn btn-info">View FIFO Lots</a>
+        <a href="/lots/LIFO" class="btn btn-warning">View LIFO Lots</a>
+      </div>
+    </div>
+  </div>
+</div>

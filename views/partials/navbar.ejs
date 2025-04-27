@@ -1,0 +1,45 @@
+<!-- navbar.ejs -->
+<nav class="navbar navbar-expand-lg navbar-dark bg-dark">
+  <div class="container">
+    <a class="navbar-brand" href="/">Stock Trading</a>
+    <button
+      class="navbar-toggler"
+      type="button"
+      data-bs-toggle="collapse"
+      data-bs-target="#navbarNav"
+    >
+      <span class="navbar-toggler-icon"></span>
+    </button>
+    <div class="collapse navbar-collapse" id="navbarNav">
+      <ul class="navbar-nav me-auto">
+        <% if (user) { %>
+        <li class="nav-item">
+          <a class="nav-link" href="/admin/dashboard">Dashboard</a>
+        </li>
+        <li class="nav-item">
+          <a class="nav-link" href="/trades">Trades</a>
+        </li>
+        <li class="nav-item">
+          <a class="nav-link" href="/lots/FIFO">Lots</a>
+        </li>
+        <li class="nav-item">
+          <a class="nav-link" href="/admin/logout">Logout</a>
+        </li>
+        <% } %>
+      </ul>
+      <ul class="navbar-nav">
+        <% if (user) { %>
+        <li class="nav-item">
+          <span class="navbar-text me-3"
+            >Logged in as <%= user.username %></span
+          >
+        </li>
+        <% } else { %>
+        <li class="nav-item">
+          <a class="nav-link" href="/admin/login">Login</a>
+        </li>
+        <% } %>
+      </ul>
+    </div>
+  </div>
+</nav>

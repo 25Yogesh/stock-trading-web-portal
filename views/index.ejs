@@ -1,0 +1,15 @@
+<!-- index.ejs -->
+<div class="jumbotron">
+  <h1 class="display-4">Stock Trading Portal</h1>
+  <p class="lead">Manage your stock trades with FIFO and LIFO lot management</p>
+  <hr class="my-4" />
+  <% if (user) { %>
+  <p>Welcome back, <%= user.username %>!</p>
+  <a class="btn btn-primary btn-lg" href="/admin/dashboard" role="button"
+    >Go to Dashboard</a
+  >
+  <% } else { %>
+  <p>Please login to access the portal</p>
+  <a class="btn btn-primary btn-lg" href="/admin/login" role="button">Login</a>
+  <% } %>
+</div>

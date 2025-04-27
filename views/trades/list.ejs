@@ -1,0 +1,60 @@
+<!-- trade-list.ejs -->
+<div class="container mt-4">
+  <div class="d-flex justify-content-between align-items-center mb-4">
+    <h2 class="mb-0">Trade History</h2>
+    <div>
+      <a href="/trades/new" class="btn btn-primary">
+        <i class="bi bi-plus-circle me-2"></i>New Trade
+      </a>
+      <a href="/trades/bulk" class="btn btn-danger">
+        <i class="bi bi-plus-circle me-2"></i>Bulk Trade
+      </a>
+    </div>
+  </div>
+  <div class="card shadow">
+    <div class="card-body p-0">
+      <div class="table-responsive">
+        <table class="table table-hover mb-0">
+          <thead class="table-light">
+            <tr>
+              <th>Trade ID</th>
+              <th>Stock</th>
+              <th class="text-end">Qty</th>
+              <th class="text-end">Price</th>
+              <th class="text-end">Amount</th>
+              <th>Broker</th>
+              <th>Date</th>
+            </tr>
+          </thead>
+          <tbody>
+            <% let sno = 1; trades.forEach(trade => { %>
+            <tr class="align-middle">
+              <td><%= 'Trade'+(sno++)//trade.trade_id %></td>
+              <td><strong><%= trade.stock_name %></strong></td>
+              <td
+                class="text-end <%= trade.quantity > 0 ? 'text-success' : 'text-danger' %>"
+              >
+                <%= trade.quantity > 0 ? '+' : '' %><%= trade.quantity %>
+              </td>
+              <td class="text-end">
+                $<%= trade.price ? Number(trade.price).toFixed(2) : '0.00' %>
+              </td>
+              <td class="text-end fw-bold">
+                $<%= trade.amount ? Number(trade.amount).toFixed(2) : '0.00' %>
+              </td>
+              <td>
+                <span class="badge bg-secondary"><%= trade.broker_name %></span>
+              </td>
+              <td>
+                <small class="text-muted"
+                  ><%= new Date(trade.created_at).toLocaleString() %></small
+                >
+              </td>
+            </tr>
+            <% }) %>
+          </tbody>
+        </table>
+      </div>
+    </div>
+  </div>
+</div>

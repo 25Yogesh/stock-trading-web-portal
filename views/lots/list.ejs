@@ -1,0 +1,113 @@
+<!-- lot-list.ejs -->
+<div class="container mt-4">
+  <div class="d-flex justify-content-between align-items-center mb-4">
+    <h2 class="mb-0">Lot Management</h2>
+    <div class="btn-group shadow-sm">
+      <a
+        href="/lots/FIFO"
+        class="btn <%= method === 'FIFO' ? 'btn-primary' : 'btn-outline-primary' %>"
+      >
+        FIFO View
+      </a>
+      <a
+        href="/lots/LIFO"
+        class="btn <%= method === 'LIFO' ? 'btn-primary' : 'btn-outline-primary' %>"
+      >
+        LIFO View
+      </a>
+    </div>
+  </div>
+  <div class="card shadow">
+    <div class="card-header bg-light">
+      <h5 class="mb-0"><%= method %> Method</h5>
+    </div>
+    <div class="card-body p-0">
+      <div class="table-responsive">
+        <table class="table table-hover mb-0">
+          <thead class="table-light">
+            <tr>
+              <th>Lot ID</th>
+              <th>Stock</th>
+              <th class="text-end">Original</th>
+              <th class="text-end">Realized</th>
+              <th class="text-end">Remaining</th>
+              <th>Status</th>
+              <th>Details</th>
+            </tr>
+          </thead>
+          <tbody>
+            <% lots.forEach(lot => { %>
+            <tr class="align-middle">
+              <td><%= lot.lot_id %></td>
+              <td><strong><%= lot.stock_name %></strong></td>
+              <td class="text-end"><%= lot.lot_quantity %></td>
+              <td class="text-end"><%= lot.realized_total || 0 %></td>
+              <td
+                class="text-end <%= lot.remaining_quantity > 0 ? 'text-success fw-bold' : 'text-muted' %>"
+              >
+                <%= lot.remaining_quantity %>
+              </td>
+              <td>
+                <span
+                  class="badge bg-<%= lot.lot_status === 'OPEN' ? 'primary' : lot.lot_status === 'PARTIALLY_REALIZED' ? 'warning' : 'success' %>"
+                >
+                  <%= lot.lot_status.replace('_', ' ') %>
+                </span>
+              </td>
+              <td>
+                <% if (lot.realization_details && lot.realization_details.length
+                > 0) { %>
+                <button
+                  class="btn btn-sm btn-outline-secondary"
+                  type="button"
+                  data-bs-toggle="collapse"
+                  data-bs-target="#details-<%= lot.lot_id %>"
+                >
+                  Show Details (<%= lot.realization_details.length %>)
+                </button>
+                <% } else { %>
+                <span class="text-muted">None</span>
+                <% } %>
+              </td>
+            </tr>
+            <% if (lot.realization_details && lot.realization_details.length >
+            0) { %>
+            <tr>
+              <td colspan="7" class="p-0 border-0">
+                <div class="collapse" id="details-<%= lot.lot_id %>">
+                  <div class="card card-body bg-light">
+                    <h6>Realization Details:</h6>
+                    <table class="table table-sm">
+                      <thead>
+                        <tr>
+                          <th>Trade ID</th>
+                          <th>Qty Sold</th>
+                          <th>Price</th>
+                          <th>Date</th>
+                        </tr>
+                      </thead>
+                      <tbody>
+                        <% lot.realization_details.forEach(detail => { %>
+                        <tr>
+                          <td><%= detail.trade_id %></td>
+                          <td><%= detail.quantity %></td>
+                          <td>$<%= detail.price.toFixed(2) %></td>
+                          <td>
+                            <%= new Date(detail.created_at).toLocaleDateString()
+                            %>
+                          </td>
+                        </tr>
+                        <% }) %>
+                      </tbody>
+                    </table>
+                  </div>
+                </div>
+              </td>
+            </tr>
+            <% } %> <% }) %>
+          </tbody>
+        </table>
+      </div>
+    </div>
+  </div>
+</div>

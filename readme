@@ -1,0 +1,67 @@
+OVERVIEW -
+A comprehensive stock trading web portal with FIFO/LIFO lot management capabilities, built with Node.js, Express, and PostgreSQL. This system allows for trade entry, lot management, and provides detailed reporting on stock positions.
+
+FEATURES -
+
+1. Trade Management: Record buy/sell transactions with complete details.
+2. Lot Accounting: Automatic FIFO and LIFO lot creation and realization.
+3. Admin Dashboard: User authentication and system monitoring.
+4. Bulk Operations: Import multiple trades via CSV.
+5. Reporting: Detailed views of trades, lots, and realizations.
+
+PREREQUISITES -
+
+1. Node.js 18.x or higher.
+2. PostgreSQL 13 or higher.
+3. npm 8.x or higher.
+
+INSTALLATION -
+
+1. Clone the repository:
+   git clone https://github.com/yourusername/stock-trading-portal.git
+   cd stock-trading-portal
+
+2. Install dependencies:
+   npm install
+
+3. Set up the database:
+   Create a PostgreSQL database
+   Run the initialization script:
+   psql -U yourusername -d yourdbname -f init-db.sql
+
+4. Configure environment variables:
+   Create a .env file in the root directory:
+   DB_USER=yourdbuser
+   DB_PASSWORD=yourdbpassword
+   DB_HOST=localhost
+   DB_PORT=5432
+   DB_NAME=yourdbname
+   SESSION_SECRET=yoursupersecretkey
+   PORT=3000
+   NODE_ENV=development
+
+RUNNING THE APPLICATION -
+
+1. Development Mode:
+   npm run dev
+
+2. Production Mode:
+   npm start
+
+DATABASE SCHEMA -
+Key Tables:
+
+1. trades: Records all trade transactions.
+2. lots: Tracks stock lots with FIFO/LIFO methods.
+3. lot_realizations: Records how lots are consumed by sales.
+4. admins: Stores system administrators.
+
+BULK UPLOAD FORMAT -
+CSV format for bulk uploads:
+stock_name,quantity,broker_name,price
+AAPL,100,Broker A,150.50
+TSLA,-50,Broker B,700.25
+
+DEFAULT ADMIN CREDENTIALS -
+Username: admin
+Password: admin123
