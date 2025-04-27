@@ -5,6 +5,7 @@ module.exports = () => {
   return {
     // View: Get lots by method (FIFO or LIFO) and render list page
     getLotsByMethodView: async (req, res) => {
+      const client = await pool.connect();
       try {
         const { method } = req.params;
 
@@ -13,7 +14,9 @@ module.exports = () => {
           return res.redirect("/lots/FIFO");
         }
 
-        const { rows: lots } = await pool.query(
+        await client.query("BEGIN");
+
+        const { rows: lots } = await client.query(
           `SELECT 
             l.*,
             t.stock_name,
@@ -41,6 +44,8 @@ module.exports = () => {
           [method]
         );
 
+        await client.query("COMMIT");
+
         const processedLots = lots.map((lot) => {
           try {
             return {
@@ -64,16 +69,20 @@ module.exports = () => {
           lots: processedLots,
         });
       } catch (error) {
+        await client.query("ROLLBACK");
         console.error("Error fetching lots:", error);
         res.status(500).render("error", {
           message: "Failed to load lots",
           user: req.user,
         });
+      } finally {
+        client.release();
       }
     },
 
     // View: Get lots by specific stock and method, render list page
     getLotsByStockAndMethodView: async (req, res) => {
+      const client = await pool.connect();
       try {
         const { method, stock_name } = req.params;
 
@@ -82,14 +91,21 @@ module.exports = () => {
           return res.redirect("/lots/FIFO");
         }
 
-        const { rows } = await pool.query(
-          `SELECT l.*, t.stock_name
+        await client.query("BEGIN");
+
+        const { rows } = await client.query(
+          `SELECT 
+            l.*, 
+            t.stock_name,
+            (SELECT SUM(quantity) FROM lot_realizations WHERE lot_id = l.lot_id) as realized_total
            FROM lots l
            JOIN trades t ON l.trade_id = t.trade_id
            WHERE l.method = $1 AND t.stock_name = $2
            ORDER BY l.created_at`,
           [method, stock_name]
         );
+
+        await client.query("COMMIT");
 
         res.render("lots/list", {
           user: req.user,
@@ -98,16 +114,20 @@ module.exports = () => {
           stock_name,
         });
       } catch (error) {
+        await client.query("ROLLBACK");
         console.error("Error fetching stock lots:", error);
         res.status(500).render("error", {
           message: "Failed to load stock lots",
           user: req.user,
         });
+      } finally {
+        client.release();
       }
     },
 
     // API: Get lots by method (return JSON)
     getLotsByMethod: async (req, res) => {
+      const client = await pool.connect();
       try {
         const { method } = req.params;
 
@@ -115,19 +135,41 @@ module.exports = () => {
           return res.status(400).json({ error: "Invalid method" });
         }
 
-        const { rows } = await pool.query(
-          `SELECT l.*, t.stock_name, t.broker_name
+        await client.query("BEGIN");
+
+        const { rows } = await client.query(
+          `SELECT 
+            l.*, 
+            t.stock_name, 
+            t.broker_name,
+            (SELECT json_agg(json_build_object(
+              'realized_id', lr.realization_id,
+              'quantity', lr.quantity,
+              'price', lr.price
+            )) as realizations
            FROM lots l
            JOIN trades t ON l.trade_id = t.trade_id
+           LEFT JOIN lot_realizations lr ON l.lot_id = lr.lot_id
            WHERE l.method = $1
+           GROUP BY l.lot_id, t.stock_name, t.broker_name
            ORDER BY l.created_at`,
           [method]
         );
 
-        res.json(rows);
+        await client.query("COMMIT");
+
+        res.json(
+          rows.map((row) => ({
+            ...row,
+            realizations: row.realizations || [],
+          }))
+        );
       } catch (error) {
+        await client.query("ROLLBACK");
         console.error("Error fetching lots:", error);
         res.status(500).json({ error: "Failed to load lots" });
+      } finally {
+        client.release();
       }
     },
   };

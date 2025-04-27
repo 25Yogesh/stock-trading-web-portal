@@ -6,28 +6,27 @@ const { pool } = require("./db");
 
 passport.use(
   new LocalStrategy(async (username, password, done) => {
+    const client = await pool.connect();
     try {
-      const result = await pool.query(
+      const { rows } = await client.query(
         "SELECT * FROM admins WHERE username = $1",
         [username]
       );
-      if (result.rows.length === 0) {
-        return done(null, false, { message: "Incorrect username." });
+
+      if (rows.length === 0) {
+        return done(null, false, { message: "Incorrect username" });
       }
 
-      const admin = result.rows[0];
-      const isValidPassword = await bcrypt.compare(
-        password,
-        admin.password_hash
-      );
-
-      if (!isValidPassword) {
-        return done(null, false, { message: "Incorrect password." });
+      const isValid = await bcrypt.compare(password, rows[0].password_hash);
+      if (!isValid) {
+        return done(null, false, { message: "Incorrect password" });
       }
 
-      return done(null, admin);
+      return done(null, rows[0]);
     } catch (err) {
       return done(err);
+    } finally {
+      client.release();
     }
   })
 );

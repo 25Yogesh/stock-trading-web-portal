@@ -4,8 +4,8 @@ const router = express.Router();
 const multer = require("multer");
 const upload = multer({ dest: "uploads/" });
 
-module.exports = (pool) => {
-  const tradeController = require("../controllers/tradeController")(pool);
+module.exports = () => {
+  const tradeController = require("../controllers/tradeController")();
 
   router.get("/", ensureAuthenticated, tradeController.getAllTradesView);
   router.get("/new", ensureAuthenticated, tradeController.getCreateTradeForm);

@@ -17,8 +17,9 @@ module.exports = () => {
 
     // View: List all trades
     getAllTradesView: async (req, res) => {
+      const client = await pool.connect();
       try {
-        const { rows } = await pool.query(`
+        const { rows } = await client.query(`
           SELECT * FROM trades 
           ORDER BY created_at ASC
         `);
@@ -32,17 +33,20 @@ module.exports = () => {
           message: "Failed to load trades",
           user: req.user,
         });
+      } finally {
+        client.release();
       }
     },
 
     // API: Create a new trade
     createTrade: async (req, res) => {
+      const client = await pool.connect();
       try {
         const { stock_name, quantity, broker_name, price } = req.body;
         const amount = price * quantity;
 
-        await pool.query("BEGIN");
-        const { rows } = await pool.query(
+        await client.query("BEGIN");
+        const { rows } = await client.query(
           `INSERT INTO trades 
            (stock_name, quantity, broker_name, price, amount) 
            VALUES ($1, $2, $3, $4, $5) 
@@ -51,10 +55,8 @@ module.exports = () => {
         );
         const trade = rows[0];
 
-        // Process lots based on quantity
         if (trade.quantity > 0) {
-          // Buy trade - create new lots
-          await pool.query(
+          await client.query(
             `INSERT INTO lots 
              (trade_id, stock_name, lot_quantity, remaining_quantity, lot_status, method) 
              VALUES ($1, $2, $3, $4, 'OPEN', $5), 
@@ -69,19 +71,20 @@ module.exports = () => {
             ]
           );
         } else {
-          // Sell trade - process existing lots
-          await processLots(pool, trade, "FIFO");
-          await processLots(pool, trade, "LIFO");
+          await processLots(client, trade, "FIFO");
+          await processLots(client, trade, "LIFO");
         }
-        await pool.query("COMMIT");
+        await client.query("COMMIT");
 
         req.flash("success", "Trade created successfully!");
         res.redirect("/trades");
       } catch (err) {
-        await pool.query("ROLLBACK");
+        await client.query("ROLLBACK");
         console.error("Error creating trade:", err);
         req.flash("error", `Failed to create trade: ${err.message}`);
         res.redirect("/trades/new");
+      } finally {
+        client.release();
       }
     },
 
@@ -92,6 +95,7 @@ module.exports = () => {
 
     // API: Bulk upload trades via CSV
     bulkUploadTrades: async (req, res) => {
+      const client = await pool.connect();
       try {
         let trades = [];
         let errorLines = [];
@@ -110,7 +114,7 @@ module.exports = () => {
           return res.redirect("/trades/bulk");
         }
 
-        const { rows: successfulTrades } = await pool.query("BEGIN");
+        await client.query("BEGIN");
         const createdTrades = [];
 
         for (const [index, tradeData] of trades.entries()) {
@@ -127,7 +131,7 @@ module.exports = () => {
               throw new Error("Invalid trade data");
             }
 
-            const { rows } = await pool.query(
+            const { rows } = await client.query(
               `INSERT INTO trades 
                (stock_name, quantity, broker_name, price, amount) 
                VALUES ($1, $2, $3, $4, $5) 
@@ -138,7 +142,7 @@ module.exports = () => {
             createdTrades.push(trade);
 
             if (trade.quantity > 0) {
-              await pool.query(
+              await client.query(
                 `INSERT INTO lots 
                  (trade_id, stock_name, lot_quantity, remaining_quantity, lot_status, method) 
                  VALUES ($1, $2, $3, $4, 'OPEN', $5), 
@@ -153,16 +157,16 @@ module.exports = () => {
                 ]
               );
             } else {
-              await processLots(pool, trade, "FIFO");
-              await processLots(pool, trade, "LIFO");
+              await processLots(client, trade, "FIFO");
+              await processLots(client, trade, "LIFO");
             }
           } catch (error) {
             errorLines.push(`Line ${index + 1}: ${error.message}`);
-            await pool.query("ROLLBACK");
-            await pool.query("BEGIN");
+            await client.query("ROLLBACK");
+            await client.query("BEGIN");
           }
         }
-        await pool.query("COMMIT");
+        await client.query("COMMIT");
 
         if (errorLines.length > 0) {
           req.flash(
@@ -178,22 +182,24 @@ module.exports = () => {
         }
         res.redirect("/trades");
       } catch (error) {
-        await pool.query("ROLLBACK");
+        await client.query("ROLLBACK");
         console.error("Bulk upload error:", error);
         req.flash("error", `Bulk upload failed: ${error.message}`);
         res.redirect("/trades/bulk");
+      } finally {
+        client.release();
       }
     },
   };
 };
 
 // Helper: Process lots for a sell trade
-async function processLots(pool, trade, method) {
+async function processLots(client, trade, method) {
   const sellQuantity = Math.abs(trade.quantity);
   let remainingToSell = sellQuantity;
   const order = method === "FIFO" ? "ASC" : "DESC";
 
-  const { rows: lots } = await pool.query(
+  const { rows: lots } = await client.query(
     `SELECT * FROM lots 
      WHERE stock_name = $1 AND method = $2 AND remaining_quantity > 0
      ORDER BY created_at ${order}
@@ -215,7 +221,7 @@ async function processLots(pool, trade, method) {
         ? "PARTIALLY_REALIZED"
         : lot.lot_status;
 
-    await pool.query(
+    await client.query(
       `UPDATE lots 
        SET realized_quantity = $1,
            remaining_quantity = $2,
@@ -224,7 +230,7 @@ async function processLots(pool, trade, method) {
       [newRealized, newRemaining, newStatus, lot.lot_id]
     );
 
-    await pool.query(
+    await client.query(
       `INSERT INTO lot_realizations 
        (lot_id, trade_id, quantity, price)
        VALUES ($1, $2, $3, $4)`,
@@ -233,12 +239,6 @@ async function processLots(pool, trade, method) {
   }
 
   if (remainingToSell > 0) {
-    req.flash(
-      "error",
-      `Not enough shares available to sell ${sellQuantity} (only ${
-        sellQuantity - remainingToSell
-      } sold)`
-    );
     console.warn(
       `Couldn't find enough shares to sell ${remainingToSell} of ${trade.stock_name}`
     );

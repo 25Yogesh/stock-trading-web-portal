@@ -68,3 +68,18 @@ const PORT = process.env.PORT || 3000;
 app.listen(PORT, () => {
   console.log(`Server running on port ${PORT}`);
 });
+
+// Add connection cleanup on process exit
+process.on("exit", () => {
+  pool.end(() => {
+    console.log("Pool has ended");
+  });
+});
+
+// Handle other shutdown signals
+["SIGINT", "SIGTERM", "SIGUSR2"].forEach((signal) => {
+  process.on(signal, () => {
+    if (pool) pool.end();
+    process.exit();
+  });
+});
