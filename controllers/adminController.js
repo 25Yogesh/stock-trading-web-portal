@@ -13,38 +13,61 @@ module.exports = (pool) => {
     },
 
     // Handle login authentication
-    postLogin: passport.authenticate("local", {
-      successRedirect: "/admin/dashboard",
-      failureRedirect: "/admin/login",
-      failureFlash: true,
-    }),
+    // postLogin: passport.authenticate("local", {
+    //   successRedirect: "/admin/dashboard",
+    //   failureRedirect: "/admin/login",
+    //   failureFlash: true,
+    // }),
+    postLogin: (req, res, next) => {
+      passport.authenticate("local", (err, user, info) => {
+        if (err) {
+          return next(err);
+        }
+        if (!user) {
+          req.flash("error", info.message);
+          return res.redirect("/admin/login");
+        }
+        req.logIn(user, (err) => {
+          if (err) {
+            return next(err);
+          }
+          return res.redirect("/admin/dashboard");
+        });
+      })(req, res, next);
+    },
 
     // Render admin dashboard with counts
     getDashboard: async (req, res) => {
-      const client = await pool.connect();
-      try {
-        await client.query("BEGIN");
+      console.log("werw");
 
-        // Get counts in parallel
+      const client = await pool.connect(); // Get a client from the pool
+      try {
+        console.log("sdfsd");
+
+        await client.query("BEGIN"); // Start a transaction
+
+        // Get counts in parallel using separate client queries
         const [tradesRes, lotsRes] = await Promise.all([
           client.query("SELECT COUNT(*) FROM trades"),
           client.query("SELECT COUNT(*) FROM lots"),
         ]);
+        console.log("sdfs");
 
-        await client.query("COMMIT");
+        await client.query("COMMIT"); // Commit the transaction
 
+        // Render the dashboard with the counts
         res.render("admin/dashboard", {
           user: req.user || null,
           totalTrades: tradesRes.rows[0].count || 0,
           totalLots: lotsRes.rows[0].count || 0,
         });
       } catch (err) {
-        await client.query("ROLLBACK");
+        await client.query("ROLLBACK"); // Rollback the transaction in case of error
         console.error("Dashboard error:", err);
         req.flash("error", "Failed to load dashboard");
         res.redirect("/admin/dashboard");
       } finally {
-        client.release();
+        client.release(); // Release the client back to the pool
       }
     },
 
@@ -66,8 +89,9 @@ module.exports = (pool) => {
       try {
         await client.query("BEGIN");
 
-        const saltRounds = 10;
-        const passwordHash = await bcrypt.hash(password, saltRounds);
+        // const saltRounds = 10;
+        // const passwordHash = await bcrypt.hash(password, saltRounds);
+        const passwordHash = password;
 
         const { rows } = await client.query(
           `INSERT INTO admins (username, password_hash, email) 

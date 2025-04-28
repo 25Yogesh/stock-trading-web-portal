@@ -1,50 +1,59 @@
 // passport.js
 const passport = require("passport");
-const LocalStrategy = require("passport-local").Strategy;
 const bcrypt = require("bcrypt");
-const { pool } = require("./db");
+const LocalStrategy = require("passport-local").Strategy;
 
-passport.use(
-  new LocalStrategy(async (username, password, done) => {
+module.exports = function (passport, pool) {
+  passport.use(
+    new LocalStrategy(async (username, password, done) => {
+      const client = await pool.connect(); // Connect to the pool to get a client
+      try {
+        const result = await client.query(
+          "SELECT * FROM admins WHERE username = $1",
+          [username]
+        );
+
+        if (result.rows.length === 0) {
+          return done(null, false, { message: "Incorrect username." });
+        }
+
+        const admin = result.rows[0];
+
+        // Check password match
+        if (password === admin.password_hash) {
+          return done(null, admin);
+        } else {
+          return done(null, false, { message: "Incorrect password." });
+        }
+      } catch (err) {
+        console.error("Passport error:", err);
+        return done(err);
+      } finally {
+        client.release(); // Ensure the client is released back to the pool
+      }
+    })
+  );
+
+  passport.serializeUser((user, done) => {
+    done(null, user.admin_id);
+  });
+
+  passport.deserializeUser(async (id, done) => {
     const client = await pool.connect();
     try {
-      const { rows } = await client.query(
-        "SELECT * FROM admins WHERE username = $1",
-        [username]
+      const result = await client.query(
+        "SELECT * FROM admins WHERE admin_id = $1",
+        [id]
       );
-
-      if (rows.length === 0) {
-        return done(null, false, { message: "Incorrect username" });
+      if (result.rows.length > 0) {
+        done(null, result.rows[0]);
+      } else {
+        done(new Error("Admin not found"));
       }
-
-      const isValid = await bcrypt.compare(password, rows[0].password_hash);
-      if (!isValid) {
-        return done(null, false, { message: "Incorrect password" });
-      }
-
-      return done(null, rows[0]);
     } catch (err) {
-      return done(err);
+      done(err);
     } finally {
       client.release();
     }
-  })
-);
-
-passport.serializeUser((admin, done) => {
-  done(null, admin.admin_id);
-});
-
-passport.deserializeUser(async (id, done) => {
-  try {
-    const result = await pool.query(
-      "SELECT * FROM admins WHERE admin_id = $1",
-      [id]
-    );
-    done(null, result.rows[0]);
-  } catch (err) {
-    done(err);
-  }
-});
-
-module.exports = passport;
+  });
+};
