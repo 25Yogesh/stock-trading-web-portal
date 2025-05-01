@@ -6,7 +6,7 @@ const LocalStrategy = require("passport-local").Strategy;
 module.exports = function (passport, pool) {
   passport.use(
     new LocalStrategy(async (username, password, done) => {
-      const client = await pool.connect(); // Connect to the pool to get a client
+      const client = await pool.connect();
       try {
         const result = await client.query(
           "SELECT * FROM admins WHERE username = $1",
@@ -29,7 +29,7 @@ module.exports = function (passport, pool) {
         console.error("Passport error:", err);
         return done(err);
       } finally {
-        client.release(); // Ensure the client is released back to the pool
+        client.release();
       }
     })
   );

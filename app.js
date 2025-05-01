@@ -35,11 +35,18 @@ app.use(
     resave: false,
     saveUninitialized: false,
     cookie: {
-      secure: process.env.NODE_ENV === "production",
+      // secure: process.env.NODE_ENV === "production",
+      secure: false,
       // maxAge: 24 * 60 * 60 * 1000,
     },
   })
 );
+
+app.use((req, res, next) => {
+  console.log("Session:", req.session);
+  console.log("User:", req.user);
+  next();
+});
 
 // Passport
 app.use(passport.initialize());

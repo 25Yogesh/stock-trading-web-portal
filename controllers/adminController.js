@@ -42,7 +42,8 @@ module.exports = (pool) => {
 
       const client = await pool.connect(); // Get a client from the pool
       try {
-        console.log("sdfsd");
+        console.log("req=", req);
+        console.log("req.user=", req.user);
 
         await client.query("BEGIN"); // Start a transaction
 
@@ -57,7 +58,7 @@ module.exports = (pool) => {
 
         // Render the dashboard with the counts
         res.render("admin/dashboard", {
-          user: req.user || null,
+          user: req.user || "",
           totalTrades: tradesRes.rows[0].count || 0,
           totalLots: lotsRes.rows[0].count || 0,
         });
