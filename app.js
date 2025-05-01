@@ -42,9 +42,17 @@ app.use(
   })
 );
 
+app.use(flash());
+
 app.use((req, res, next) => {
   console.log("Session:", req.session);
   console.log("User:", req.user);
+  next();
+});
+
+app.use((req, res, next) => {
+  res.locals.success = req.flash("success");
+  res.locals.error = req.flash("error");
   next();
 });
 
@@ -52,7 +60,7 @@ app.use((req, res, next) => {
 app.use(passport.initialize());
 app.use(passport.session());
 
-app.use(flash());
+
 
 // View engine
 app.set("views", path.join(__dirname, "views"));
