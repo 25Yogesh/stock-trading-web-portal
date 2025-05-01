@@ -38,13 +38,8 @@ module.exports = (pool) => {
 
     // Render admin dashboard with counts
     getDashboard: async (req, res) => {
-      console.log("werw");
-
       const client = await pool.connect(); // Get a client from the pool
       try {
-        console.log("req=", req);
-        console.log("req.user=", req.user);
-
         await client.query("BEGIN"); // Start a transaction
 
         // Get counts in parallel using separate client queries
@@ -52,7 +47,6 @@ module.exports = (pool) => {
           client.query("SELECT COUNT(*) FROM trades"),
           client.query("SELECT COUNT(*) FROM lots"),
         ]);
-        console.log("sdfs");
 
         await client.query("COMMIT"); // Commit the transaction
 
@@ -74,8 +68,8 @@ module.exports = (pool) => {
 
     // Clear db data
     dbClear: async (req, res) => {
+      const client = await pool.connect();
       try {
-        const client = await pool.connect();
         await client.query("BEGIN");
 
         // Truncate in proper order due to foreign key constraints
