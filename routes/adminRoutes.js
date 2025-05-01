@@ -9,6 +9,7 @@ module.exports = (pool) => {
   router.get("/login", adminController.getLogin);
   router.post("/login", adminController.postLogin);
   router.get("/dashboard", ensureAuthenticated, adminController.getDashboard);
+  router.get("/clear-db", ensureAuthenticated, adminController.dbClear);
   router.get("/logout", adminController.logout);
 
   return router;

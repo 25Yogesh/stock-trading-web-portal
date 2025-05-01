@@ -3,7 +3,12 @@
   <div class="col-md-6">
     <div class="card">
       <div class="card-header">
-        <h5>Trade Statistics</h5>
+        <div class="d-flex justify-content-between">
+          <h5>Trade Statistics</h5>
+          <a href="/admin/clear-db" download="" class="btn btn-danger">
+            Download Sample CSV
+          </a>
+        </div>
       </div>
       <div class="card-body">
         <p>Welcome, <%= user.username %>!</p>
@@ -18,7 +23,7 @@
       <div class="card-header">
         <h5>Quick Actions</h5>
       </div>
-      <div class="card-body">
+      <div class="card-body d-flex flex-wrap gap-2">
         <a href="/trades/new" class="btn btn-primary">Add New Trade</a>
         <a href="/trades/bulk" class="btn btn-danger">Bulk Upload Trade</a>
         <a href="/lots/FIFO" class="btn btn-info">View FIFO Lots</a>

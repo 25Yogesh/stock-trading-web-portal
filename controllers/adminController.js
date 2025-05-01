@@ -72,6 +72,33 @@ module.exports = (pool) => {
       }
     },
 
+    // Clear db data
+    dbClear: async (req, res) => {
+      try {
+        const client = await pool.connect();
+        await client.query("BEGIN");
+
+        // Truncate in proper order due to foreign key constraints
+        // await client.query(
+        //   "TRUNCATE TABLE lot_realizations, lots, trades, admins RESTART IDENTITY CASCADE"
+        // );
+        await client.query(
+          "TRUNCATE TABLE lot_realizations, lots, trades RESTART IDENTITY CASCADE"
+        );
+
+        await client.query("COMMIT");
+        console.log("✅ Database cleared and IDs reset successfully!");
+        res.redirect("/admin/dashboard");
+      } catch (err) {
+        await client.query("ROLLBACK");
+        console.error("❌ Error clearing database:", err);
+        req.flash("error", "Failed to clearing database");
+        res.redirect("/admin/dashboard");
+      } finally {
+        client.release();
+      }
+    },
+
     // Logout the user and redirect to home
     logout: (req, res, next) => {
       req.logout(function (err) {

@@ -80,7 +80,6 @@
                     <table class="table table-sm">
                       <thead>
                         <tr>
-                          // <th>Trade ID</th>
                           <th>Qty Sold</th>
                           <th>Price</th>
                           <th>Date</th>
@@ -89,7 +88,6 @@
                       <tbody>
                         <% lot.realization_details.forEach(detail => { %>
                         <tr>
-                          // <td><%= detail.trade_id %></td>
                           <td><%= detail.quantity %></td>
                           <td>$<%= detail.price.toFixed(2) %></td>
                           <td>
