@@ -36,9 +36,9 @@
             </tr>
           </thead>
           <tbody>
-            <% lots.forEach(lot => { %>
+            <% let sno = 1; lots.forEach(lot => { %>
             <tr class="align-middle">
-              <td><%= lot.lot_id %></td>
+              <td><%= 'Lot'+(sno++)//lot.lot_id %></td>
               <td><strong><%= lot.stock_name %></strong></td>
               <td class="text-end"><%= lot.lot_quantity %></td>
               <td class="text-end"><%= lot.realized_total || 0 %></td>
@@ -80,7 +80,7 @@
                     <table class="table table-sm">
                       <thead>
                         <tr>
-                          <th>Trade ID</th>
+                          // <th>Trade ID</th>
                           <th>Qty Sold</th>
                           <th>Price</th>
                           <th>Date</th>
@@ -89,7 +89,7 @@
                       <tbody>
                         <% lot.realization_details.forEach(detail => { %>
                         <tr>
-                          <td><%= detail.trade_id %></td>
+                          // <td><%= detail.trade_id %></td>
                           <td><%= detail.quantity %></td>
                           <td>$<%= detail.price.toFixed(2) %></td>
                           <td>
